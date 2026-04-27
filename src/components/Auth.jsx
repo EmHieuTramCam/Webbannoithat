@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Auth = ({ authMode, setAuthMode, handleAuth, setView }) => {
+const Auth = ({ authMode, setAuthMode, handleAuth, setView, authError }) => {
     return (
         <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="auth-full-screen">
             <div className="auth-split-box" style={{ height: '100vh', overflow: 'hidden' }}>
@@ -38,6 +38,14 @@ const Auth = ({ authMode, setAuthMode, handleAuth, setView }) => {
                             <p className="text-muted small ls-1">{authMode === 'login' ? 'Vui lòng điền thông tin để tiếp tục.' : 'Bắt đầu hành trình kiến tạo không gian sống.'}</p>
                         </div>
 
+                        <AnimatePresence>
+                            {authError && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="alert alert-danger rounded-0 small border-0 border-start border-4 border-danger py-2 mb-4">
+                                    <i className="fas fa-exclamation-circle me-2"></i> {authError}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <form onSubmit={handleAuth}>
                             {authMode === 'signup' && (
                                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -52,7 +60,7 @@ const Auth = ({ authMode, setAuthMode, handleAuth, setView }) => {
                                         <label className="small ls-2 uppercase fw-bold text-muted mb-1 d-block" style={{ fontSize: '0.6rem' }}>Số điện thoại</label>
                                         <div className="position-relative">
                                             <i className="fas fa-phone position-absolute text-muted" style={{ left: '0', top: '10px', fontSize: '0.8rem' }}></i>
-                                            <input className="lux-input-modern ps-4" style={{ padding: '8px 0' }} type="tel" placeholder="09xx xxx xxx" required />
+                                            <input name="phone" className="lux-input-modern ps-4" style={{ padding: '8px 0' }} type="tel" placeholder="09xx xxx xxx" required />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -73,7 +81,7 @@ const Auth = ({ authMode, setAuthMode, handleAuth, setView }) => {
                                 </div>
                                 <div className="position-relative">
                                     <i className="fas fa-lock position-absolute text-muted" style={{ left: '0', top: '10px', fontSize: '0.8rem' }}></i>
-                                    <input className="lux-input-modern ps-4" style={{ padding: '8px 0' }} type="password" placeholder="••••••••" required />
+                                    <input name="password" className="lux-input-modern ps-4" style={{ padding: '8px 0' }} type="password" placeholder="••••••••" required />
                                 </div>
                             </div>
 

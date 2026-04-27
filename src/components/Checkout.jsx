@@ -27,6 +27,7 @@ const Checkout = ({ cart, total, setView, clearCart, addOrder }) => {
         const newOrder = {
             id: `ORD${Date.now().toString().slice(-3)}`,
             customer: formData.name,
+            phone: formData.phone,
             total: total,
             date: new Date().toISOString().split('T')[0],
             status: 'Đang xử lý'

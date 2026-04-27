@@ -23,10 +23,14 @@ const MemoizedFooter = React.memo(Footer);
 const MemoizedProductCard = React.memo(ProductCard);
 
 const App = () => {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState(() => {
+    const saved = localStorage.getItem('lux_products');
+    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+  });
   const [user, setUser] = useState(null);
   const [view, setView] = useState('store'); // 'auth', 'store', 'admin', 'checkout'
   const [authMode, setAuthMode] = useState('login');
+  const [authError, setAuthError] = useState('');
   const [cart, setCart] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 6;
@@ -34,11 +38,35 @@ const App = () => {
   const [activeCat, setActiveCat] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [orders, setOrders] = useState([
-    { id: 'ORD001', customer: 'Nguyễn Văn A', total: 12500000, date: '2026-04-26', status: 'Hoàn thành' },
-    { id: 'ORD002', customer: 'Trần Thị B', total: 24500000, date: '2026-04-27', status: 'Đang xử lý' },
-  ]);
+  const [orders, setOrders] = useState(() => {
+    const saved = localStorage.getItem('lux_orders');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'ORD001', customer: 'Nguyễn Văn A', total: 12500000, date: '2026-04-26', status: 'Hoàn thành' },
+      { id: 'ORD002', customer: 'Trần Thị B', total: 24500000, date: '2026-04-27', status: 'Đang xử lý' },
+    ];
+  });
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('lux_users');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 1, username: 'admin', password: '1', role: 'admin', name: 'Quản trị viên', phone: '0999999999' }
+    ];
+  });
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Sync state to localStorage
+  useEffect(() => {
+    localStorage.setItem('lux_products', JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem('lux_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('lux_users', JSON.stringify(users));
+  }, [users]);
 
   // Restore user from localStorage
   useEffect(() => {
@@ -53,18 +81,35 @@ const App = () => {
 
   const handleAuth = useCallback((e) => {
     e.preventDefault();
+    setAuthError('');
     const formData = new FormData(e.target);
     const fullName = formData.get('fullname');
     const username = formData.get('username');
+    const phone = formData.get('phone');
+    const password = formData.get('password');
     
-    const displayName = authMode === 'signup' && fullName ? fullName : username;
-    const role = username.toLowerCase() === 'admin' ? 'admin' : 'user';
-    const userData = { name: displayName, role: role };
-    setUser(userData);
-    localStorage.setItem('lux_user', JSON.stringify(userData));
-    if (role === 'admin') setView('admin');
-    else setView('store');
-  }, [authMode]);
+    if (authMode === 'signup') {
+        if (users.find(u => u.username === username)) {
+            setAuthError('Tên đăng nhập đã tồn tại!');
+            return;
+        }
+        const newUser = { id: Date.now(), username, password, name: fullName, phone, role: 'user' };
+        setUsers(prev => [...prev, newUser]);
+        setUser(newUser);
+        localStorage.setItem('lux_user', JSON.stringify(newUser));
+        setView('store');
+    } else {
+        const found = users.find(u => u.username === username && u.password === password);
+        if (found) {
+            setUser(found);
+            localStorage.setItem('lux_user', JSON.stringify(found));
+            if (found.role === 'admin') setView('admin');
+            else setView('store');
+        } else {
+            setAuthError('Sai tên đăng nhập hoặc mật khẩu!');
+        }
+    }
+  }, [authMode, users]);
 
   const addToCart = useCallback((p, qty = 1) => {
     if (!user) {
@@ -114,12 +159,16 @@ const App = () => {
     setCurrentPage(1);
   }, [activeCat, searchTerm]);
 
-  const addProduct = (p) => setProducts([...products, p]);
+  const addProduct = (p) => setProducts([p, ...products]);
   const updateProduct = (p) => setProducts(products.map(item => item.id === p.id ? p : item));
   const deleteProduct = (id) => setProducts(products.filter(item => item.id !== id));
 
   const addOrder = (order) => setOrders([order, ...orders]);
   const clearCart = useCallback(() => setCart([]), []);
+
+  const addUser = (u) => setUsers(prev => [...prev, u]);
+  const editUser = (u) => setUsers(prev => prev.map(item => item.id === u.id ? u : item));
+  const deleteUser = (id) => setUsers(prev => prev.filter(item => item.id !== id));
 
 
   return (
@@ -130,9 +179,10 @@ const App = () => {
           {view === 'auth' && (
             <Auth 
                 authMode={authMode} 
-                setAuthMode={setAuthMode} 
+                setAuthMode={(mode) => { setAuthMode(mode); setAuthError(''); }} 
                 handleAuth={handleAuth} 
                 setView={setView} 
+                authError={authError}
             />
           )}
 
@@ -141,9 +191,14 @@ const App = () => {
                 onLogout={() => { localStorage.removeItem('lux_user'); setUser(null); setView('auth'); }}
                 products={products}
                 orders={orders}
+                users={users}
                 onAdd={addProduct}
                 onEdit={updateProduct}
                 onDelete={deleteProduct}
+                onAddUser={addUser}
+                onEditUser={editUser}
+                onDeleteUser={deleteUser}
+                onGoToStore={() => setView('store')}
             />
           )}
 

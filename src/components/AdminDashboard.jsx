@@ -3,18 +3,41 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const CATEGORIES = ["Tất cả", "Ghế", "Bàn", "Đèn", "Sofa", "Giường", "Kệ"];
 
-// Dummy data for Customers
-const DUMMY_CUSTOMERS = [
-    { id: 1, name: 'Nguyễn Văn A', email: 'vana@gmail.com', phone: '0901234567', totalSpent: 45000000 },
-    { id: 2, name: 'Trần Thị B', email: 'thib@gmail.com', phone: '0912345678', totalSpent: 12800000 },
-    { id: 3, name: 'Lê Văn C', email: 'vanc@gmail.com', phone: '0987654321', totalSpent: 5200000 },
-    { id: 4, name: 'Phạm Minh H', email: 'minhhieu@gmail.com', phone: '0934079868', totalSpent: 150000000 },
-];
 
-const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete }) => {
+const AdminDashboard = ({ onLogout, products, orders, users, onAdd, onEdit, onDelete, onGoToStore, onAddUser, onEditUser, onDeleteUser }) => {
     const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'products', 'orders', 'customers'
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+
+    const computedCustomers = React.useMemo(() => {
+        return users.filter(u => u.role !== 'admin').map(u => {
+            const totalSpent = orders.filter(o => o.phone === u.phone || o.customer === u.name).reduce((sum, o) => sum + o.total, 0);
+            return { ...u, totalSpent };
+        }).sort((a, b) => b.totalSpent - a.totalSpent);
+    }, [users, orders]);
+
+    const handleOpenUserForm = (u = null) => {
+        setEditingUser(u);
+        setIsUserFormOpen(true);
+    };
+
+    const handleSaveUser = (e) => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const u = {
+            id: editingUser ? editingUser.id : Date.now(),
+            name: f.get('name'),
+            phone: f.get('phone'),
+            username: f.get('username'),
+            password: f.get('password') || (editingUser ? editingUser.password : '123456'),
+            role: 'user'
+        };
+        if (editingUser) onEditUser(u);
+        else onAddUser(u);
+        setIsUserFormOpen(false);
+    };
 
     const handleOpenForm = (p = null) => {
         setEditingProduct(p);
@@ -51,25 +74,25 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
                 <div className="col-md-3">
                     <div className="bg-white p-4 shadow-sm border-start border-4 border-gold">
                         <p className="text-muted small ls-1 uppercase fw-bold mb-2">Doanh Thu Tháng</p>
-                        <h3 className="m-0 fw-bold">1.280M đ</h3>
+                        <h3 className="m-0 fw-bold">{(orders.reduce((sum, o) => sum + o.total, 0) / 1000000).toFixed(1)}M đ</h3>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="bg-white p-4 shadow-sm border-start border-4 border-dark">
                         <p className="text-muted small ls-1 uppercase fw-bold mb-2">Đơn Hàng Mới</p>
-                        <h3 className="m-0 fw-bold">142</h3>
+                        <h3 className="m-0 fw-bold">{orders.length}</h3>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="bg-white p-4 shadow-sm border-start border-4 border-dark">
-                        <p className="text-muted small ls-1 uppercase fw-bold mb-2">Khách Hàng</p>
-                        <h3 className="m-0 fw-bold">850</h3>
+                        <p className="text-muted small ls-1 uppercase fw-bold mb-2">Sản Phẩm</p>
+                        <h3 className="m-0 fw-bold">{products.length}</h3>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="bg-white p-4 shadow-sm border-start border-4 border-success">
-                        <p className="text-muted small ls-1 uppercase fw-bold mb-2">Lượt Truy Cập</p>
-                        <h3 className="m-0 fw-bold">12.5k</h3>
+                        <p className="text-muted small ls-1 uppercase fw-bold mb-2">Khách Hàng</p>
+                        <h3 className="m-0 fw-bold">{computedCustomers.length}</h3>
                     </div>
                 </div>
             </div>
@@ -107,12 +130,15 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
                     <div className="bg-white p-4 shadow-sm h-100">
                         <h5 className="mb-4 fw-bold small ls-2 uppercase">Trạng Thái Kho</h5>
                         <div className="d-flex flex-column gap-3">
-                            {CATEGORIES.slice(1, 6).map(c => (
-                                <div key={c} className="d-flex justify-content-between align-items-center">
-                                    <span className="small text-muted">{c} Nội Thất</span>
-                                    <span className="badge bg-light text-dark border">{Math.floor(Math.random() * 20) + 5}</span>
-                                </div>
-                            ))}
+                            {CATEGORIES.slice(1).map(c => {
+                                const count = products.filter(p => p.category === c).length;
+                                return (
+                                    <div key={c} className="d-flex justify-content-between align-items-center">
+                                        <span className="small text-muted">{c} Nội Thất</span>
+                                        <span className="badge bg-light text-dark border">{count}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -211,7 +237,7 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
         <>
             <header className="d-flex justify-content-between align-items-center mb-5">
                 <h2 className="brand-font m-0">Quản Lý Khách Hàng</h2>
-                <button className="btn btn-dark rounded-0 px-4 small ls-1"><i className="fas fa-user-plus me-2"></i> THÊM KHÁCH HÀNG</button>
+                <button onClick={() => handleOpenUserForm()} className="btn btn-dark rounded-0 px-4 small ls-1"><i className="fas fa-user-plus me-2"></i> THÊM KHÁCH HÀNG</button>
             </header>
 
             <div className="bg-white p-4 shadow-sm">
@@ -227,15 +253,15 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
                             </tr>
                         </thead>
                         <tbody>
-                            {DUMMY_CUSTOMERS.map(c => (
+                            {computedCustomers.map(c => (
                                 <tr key={c.id}>
                                     <td><span className="fw-bold small">{c.name}</span></td>
-                                    <td className="small text-muted">{c.email}</td>
+                                    <td className="small text-muted">{c.email || 'Khách vãng lai'}</td>
                                     <td className="small">{c.phone}</td>
                                     <td className="fw-bold small text-gold">{new Intl.NumberFormat('vi-VN').format(c.totalSpent)}đ</td>
                                     <td className="text-end">
-                                        <button className="btn btn-sm btn-outline-dark rounded-0 me-2"><i className="fas fa-envelope"></i></button>
-                                        <button className="btn btn-sm btn-outline-danger rounded-0"><i className="fas fa-ban"></i></button>
+                                        <button onClick={() => handleOpenUserForm(c)} className="btn btn-sm btn-outline-dark rounded-0 me-2"><i className="fas fa-edit"></i></button>
+                                        <button onClick={() => onDeleteUser(c.id)} className="btn btn-sm btn-outline-danger rounded-0"><i className="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             ))}
@@ -268,6 +294,9 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
                     </button>
                     
                     <div className="mt-5 pt-5">
+                        <button className="btn btn-link text-white-50 text-decoration-none text-start p-3 rounded-0 small ls-1 d-flex align-items-center gap-3 hover-white-bg w-100" onClick={onGoToStore}>
+                            <i className="fas fa-store" style={{ width: '20px' }}></i> XEM CỬA HÀNG
+                        </button>
                         <button className="btn btn-link text-white-50 text-decoration-none text-start p-3 rounded-0 small ls-1 d-flex align-items-center gap-3 hover-white-bg w-100" onClick={onLogout}>
                             <i className="fas fa-sign-out-alt" style={{ width: '20px' }}></i> ĐĂNG XUẤT
                         </button>
@@ -302,6 +331,26 @@ const AdminDashboard = ({ onLogout, products, orders, onAdd, onEdit, onDelete })
                                 <div className="col-12 d-flex gap-3 mt-4">
                                     <button type="submit" className="btn btn-dark rounded-0 px-4">LƯU THÔNG TIN</button>
                                     <button type="button" onClick={() => setIsFormOpen(false)} className="btn btn-outline-secondary rounded-0 px-4">HỦY</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {isUserFormOpen && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="detail-overlay-master d-flex align-items-center justify-content-center" style={{ zIndex: 6000 }}>
+                        <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="bg-white p-5 shadow-lg" style={{ width: '100%', maxWidth: '600px' }}>
+                            <h3 className="brand-font mb-4">{editingUser ? 'Chỉnh Sửa Người Dùng' : 'Thêm Người Dùng Mới'}</h3>
+                            <form onSubmit={handleSaveUser} className="row g-3">
+                                <div className="col-md-6"><label className="small fw-bold">Họ và tên</label><input name="name" defaultValue={editingUser?.name} className="form-control rounded-0" required /></div>
+                                <div className="col-md-6"><label className="small fw-bold">Số điện thoại</label><input name="phone" type="tel" defaultValue={editingUser?.phone} className="form-control rounded-0" required /></div>
+                                <div className="col-12"><label className="small fw-bold">Tên đăng nhập (Email)</label><input name="username" defaultValue={editingUser?.username} className="form-control rounded-0" required /></div>
+                                <div className="col-12"><label className="small fw-bold">Mật khẩu {editingUser && '(để trống nếu không đổi)'}</label><input name="password" type="password" className="form-control rounded-0" placeholder="••••••••" /></div>
+                                <div className="col-12 d-flex gap-3 mt-4">
+                                    <button type="submit" className="btn btn-dark rounded-0 px-4">LƯU THÔNG TIN</button>
+                                    <button type="button" onClick={() => setIsUserFormOpen(false)} className="btn btn-outline-secondary rounded-0 px-4">HỦY</button>
                                 </div>
                             </form>
                         </motion.div>
