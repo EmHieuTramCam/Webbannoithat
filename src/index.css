@@ -5,7 +5,7 @@
   --gold: #c5a059;
   --white: #ffffff;
   --light: #f8f8f8;
-  --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  --transition: all 0.2s ease-out;
 }
 
 body {
@@ -13,6 +13,17 @@ body {
   color: var(--primary);
   background: var(--white);
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ẩn các thành phần lạ hoặc thông báo trôi nổi */
+#ai-assistant, .ai-widget, .floating-notification, #notification-bell, [class*="notification"], [id*="notification"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .brand-font {
@@ -235,6 +246,7 @@ body {
 
 .main-header-lux {
   z-index: 1000;
+  background-color: #fff;
 }
 
 .brand-lux-main {
@@ -289,9 +301,9 @@ body {
 
 
 .hero-slider-main {
-  height: 90vh;
+  min-height: 90vh;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-slide {
@@ -303,6 +315,7 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  will-change: transform;
 }
 
 .hero-caption-centered {
@@ -400,10 +413,9 @@ body {
 }
 
 .pc-img-box img {
-  width: 100%;
-  height: 100%;
   object-fit: contain;
-  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+  will-change: transform;
   mix-blend-mode: multiply;
 }
 
@@ -463,9 +475,8 @@ body {
 .detail-overlay-master {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(10px);
-  z-index: 5000;
+  background: rgba(0,0,0,0.9);
+  z-index: 30000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -707,34 +718,102 @@ body {
   transition: all 0.4s ease;
 }
 
-.lux-float {
-  animation: luxFloat 6s ease-in-out infinite;
-}
-
-.lux-sway {
-  animation: luxSway 8s ease-in-out infinite;
-}
-
-@keyframes luxFloat {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes luxSway {
-  0% { transform: translateX(0px) rotate(0deg); }
-  25% { transform: translateX(5px) rotate(0.5deg); }
-  75% { transform: translateX(-5px) rotate(-0.5deg); }
-  100% { transform: translateX(0px) rotate(0deg); }
-}
-
 @keyframes luxFadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
+}
+
+/* Performance Tweaks */
+.container, .section, .admin-master {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+.motion-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Premium Checkout V2 Styles */
+.checkout-master-v2 { min-height: 100vh; }
+.btn-back-minimal {
+  background: none; border: 1px solid #eee; width: 45px; height: 45px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+}
+.btn-back-minimal:hover { background: #f8f8f8; border-color: #111; }
+.step-item { font-size: 0.65rem; font-weight: 800; letter-spacing: 2px; color: #ccc; }
+.step-item.active { color: #111; }
+.lux-input-group { margin-bottom: 5px; }
+.lux-input-group label {
+  display: block; font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px;
+  color: #888; margin-bottom: 8px;
+}
+.lux-input-group input, .lux-input-group textarea {
+  width: 100%; border: 1px solid #eee; padding: 15px; font-size: 0.9rem;
+  transition: all 0.3s; border-radius: 0; outline: none;
+}
+.lux-input-group input:focus, .lux-input-group textarea:focus { border-color: #111; background: #fafafa; }
+.pay-card {
+  border: 1px solid #eee; padding: 25px; cursor: pointer; transition: all 0.3s; position: relative;
+}
+.pay-card:hover { border-color: #ccc; }
+.pay-card.active { border-color: #111; background: #fafafa; }
+.pay-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 1.5rem; }
+.pay-check { width: 18px; height: 18px; border: 2px solid #eee; border-radius: 50%; position: relative; }
+.pay-card.active .pay-check { border-color: #c5a059; background: #c5a059; }
+.pay-card.active .pay-check::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 8px; height: 8px;
+  background: white; border-radius: 50%;
+}
+.qr-box { box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+.summary-qty-badge {
+  position: absolute; 
+  top: -12px; 
+  right: -12px; 
+  background: #111; 
+  color: white;
+  width: 28px; 
+  height: 28px; 
+  border-radius: 50%; 
+  font-size: 0.85rem;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-weight: 700;
+  z-index: 5;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.success-icon-box {
+  width: 100px; height: 100px; border: 2px solid #28a745; color: #28a745;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; margin: 0 auto; animation: pulseSuccess 2s infinite;
+}
+@keyframes pulseSuccess {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* Admin Sidebar Utilities */
+.hover-white-bg:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white !important;
+}
+
+.admin-sidebar .btn {
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.admin-sidebar .btn i {
+  opacity: 0.7;
+}
+
+.admin-sidebar .btn:hover i {
+  opacity: 1;
 }
