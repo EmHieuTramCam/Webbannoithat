@@ -18,13 +18,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ẩn các thành phần lạ hoặc thông báo trôi nổi */
-#ai-assistant, .ai-widget, .floating-notification, #notification-bell, [class*="notification"], [id*="notification"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
+/* AI Assistant & Notifications Enabled */
 
 .brand-font {
   font-family: 'Playfair Display', serif;
@@ -817,3 +811,63 @@ body {
 .admin-sidebar .btn:hover i {
   opacity: 1;
 }
+
+/* PRINT STYLES - FIXING BLANK PAGE */
+@media print {
+  /* Hide specific UI components */
+  .no-print, 
+  header, 
+  footer, 
+  nav, 
+  .main-header-lux, 
+  .cart-drawer-master, 
+  .hero-slider-main, 
+  .sidebar-section, 
+  .grid-header, 
+  .sidebar-promo-banner, 
+  .projects-master, 
+  .contact-section,
+  #projects,
+  #contact,
+  .btn-back-minimal,
+  .checkout-steps,
+  .order-summary-box,
+  .checkout-section,
+  aside {
+    display: none !important;
+  }
+  
+  /* Reset background and layout for body */
+  body, html {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #printable-invoice {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force grid layout in print */
+  #printable-invoice .row { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; }
+  #printable-invoice .col-2 { width: 16.6% !important; }
+  #printable-invoice .col-4 { width: 33.3% !important; }
+  #printable-invoice .col-5 { width: 41.6% !important; }
+  #printable-invoice .col-6 { width: 50% !important; }
+  #printable-invoice .col-7 { width: 58.3% !important; }
+  #printable-invoice .col-8 { width: 66.6% !important; }
+
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+}
+
+.italic { font-style: italic; }

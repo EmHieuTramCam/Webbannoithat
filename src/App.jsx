@@ -8,6 +8,7 @@ const Projects = lazy(() => import('./components/Projects'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Auth = lazy(() => import('./components/Auth'));
 const Checkout = lazy(() => import('./components/Checkout'));
+import AIAssistant from './components/AIAssistant';
 
 // Standard imports for core UI
 import Header from './components/Header';
@@ -367,6 +368,13 @@ const App = () => {
                 </>
             )}
         </AnimatePresence>
+        {/* AI Assistant */}
+        <AIAssistant 
+            products={products} 
+            addToCart={addToCart} 
+            setSelectedProduct={setSelectedProduct} 
+            setView={setView} 
+        />
       </Suspense>
     </div>
   );
