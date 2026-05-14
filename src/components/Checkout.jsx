@@ -10,6 +10,7 @@ const Checkout = ({ cart, total, setView, clearCart, addOrder }) => {
         address: '',
         note: ''
     });
+    const [finalOrder, setFinalOrder] = useState(null);
 
     // VietQR Configuration
     const bankId = "techcombank"; // Ngân hàng Quân Đội
@@ -24,37 +25,178 @@ const Checkout = ({ cart, total, setView, clearCart, addOrder }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const orderId = `LX${Date.now().toString().slice(-6)}`;
         const newOrder = {
-            id: `ORD${Date.now().toString().slice(-3)}`,
+            id: orderId,
             customer: formData.name,
             phone: formData.phone,
+            address: formData.address,
+            note: formData.note,
             total: total,
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toLocaleDateString('vi-VN'),
+            items: [...cart],
             status: 'Đang xử lý'
         };
+        setFinalOrder(newOrder);
         addOrder(newOrder);
         setOrderSuccess(true);
+        // We don't automatically redirect if they might want to print the invoice
+        // Or we increase the timeout
         setTimeout(() => {
             clearCart();
-            setView('store');
-        }, 5000);
+            // setView('store'); // Let the user decide when to go back or wait longer
+        }, 1000);
     };
 
-    if (orderSuccess) {
+    const handlePrint = () => {
+        window.print();
+    };
+
+    if (orderSuccess && finalOrder) {
         return (
             <div className="container py-5 my-5 text-center">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-5">
-                    <div className="success-icon-box mb-4">
-                        <i className="fas fa-check"></i>
+                <div className="no-print">
+                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-5">
+                        <div className="success-icon-box mb-4">
+                            <i className="fas fa-check"></i>
+                        </div>
+                        <h1 className="brand-font display-4 mb-3">Tuyệt Vời!</h1>
+                        <p className="text-muted ls-1 uppercase fw-bold mb-5" style={{ fontSize: '0.8rem' }}>Đơn hàng của bạn đã được ghi nhận</p>
+                        <div className="bg-light p-4 d-inline-block border mb-5" style={{ minWidth: '350px' }}>
+                            <p className="small mb-2">Mã đơn hàng: <span className="fw-bold">#{finalOrder.id}</span></p>
+                            <p className="small mb-3">Tổng thanh toán: <span className="fw-bold text-gold">{new Intl.NumberFormat('vi-VN').format(finalOrder.total)}đ</span></p>
+                            <div className="d-flex gap-2 justify-content-center">
+                                <button onClick={handlePrint} className="btn btn-dark btn-sm rounded-0 px-4 py-2 ls-1 fw-bold">
+                                    <i className="fas fa-file-pdf me-2"></i> XUẤT HÓA ĐƠN
+                                </button>
+                                <button onClick={() => setView('store')} className="btn btn-outline-dark btn-sm rounded-0 px-4 py-2 ls-1 fw-bold">
+                                    QUAY LẠI CỬA HÀNG
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-muted small">Chúng tôi sẽ liên hệ xác nhận đơn hàng trong giây lát.</p>
+                    </motion.div>
+                </div>
+
+                {/* REDESIGNED LUXURY INVOICE */}
+                <div id="printable-invoice" className="d-none d-print-block" style={{ color: '#111', fontFamily: "'Inter', sans-serif" }}>
+                    {/* Header Section */}
+                    <div className="d-flex justify-content-between align-items-end mb-5 pb-5 border-bottom border-dark border-2">
+                        <div style={{ flex: 1 }}>
+                            <h1 className="brand-font mb-2" style={{ fontSize: '4.5rem', lineHeight: 1, letterSpacing: '5px', fontWeight: 800 }}>LUXLIFE</h1>
+                            <div className="d-flex align-items-center gap-3">
+                                <span style={{ width: '40px', height: '2px', background: '#c5a059' }}></span>
+                                <p className="small text-muted uppercase ls-4 mb-0 fw-bold">Authentic Furniture & Living</p>
+                            </div>
+                        </div>
+                        <div className="text-end" style={{ flex: 1 }}>
+                            <h2 className="brand-font uppercase ls-2 mb-2" style={{ color: '#c5a059' }}>Invoice</h2>
+                            <div className="d-flex flex-column gap-1 small fw-bold uppercase ls-1">
+                                <span>No. {finalOrder.id}</span>
+                                <span>Date: {finalOrder.date}</span>
+                                <span className="text-muted" style={{ fontSize: '0.6rem' }}>Authorized Copy</span>
+                            </div>
+                        </div>
                     </div>
-                    <h1 className="brand-font display-4 mb-3">Tuyệt Vời!</h1>
-                    <p className="text-muted ls-1 uppercase fw-bold mb-5" style={{ fontSize: '0.8rem' }}>Đơn hàng của bạn đã được ghi nhận</p>
-                    <div className="bg-light p-4 d-inline-block border mb-5" style={{ minWidth: '300px' }}>
-                        <p className="small mb-1">Mã đơn hàng: <span className="fw-bold">#LX{Date.now().toString().slice(-6)}</span></p>
-                        <p className="small mb-0">Tổng thanh toán: <span className="fw-bold text-gold">{new Intl.NumberFormat('vi-VN').format(total)}đ</span></p>
+
+                    {/* Parties Section */}
+                    <div className="row mb-5 g-0">
+                        <div className="col-5">
+                            <div className="pe-5" style={{ borderLeft: '4px solid #c5a059', paddingLeft: '20px' }}>
+                                <p className="small text-muted uppercase ls-2 fw-bold mb-3">Client Information</p>
+                                <h4 className="fw-bold mb-1">{finalOrder.customer}</h4>
+                                <p className="mb-1">{finalOrder.phone}</p>
+                                <p className="small text-muted mb-0">{finalOrder.address}</p>
+                                {finalOrder.note && (
+                                    <div className="mt-3 small italic opacity-75">
+                                        Note: {finalOrder.note}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="col-2 d-flex align-items-center justify-content-center">
+                            <div style={{ width: '1px', height: '80%', background: '#eee' }}></div>
+                        </div>
+                        <div className="col-5">
+                            <div className="ps-4">
+                                <p className="small text-muted uppercase ls-2 fw-bold mb-3 text-end">Store Details</p>
+                                <div className="text-end">
+                                    <h5 className="fw-bold mb-1">LUXLIFE SHOWROOM</h5>
+                                    <p className="small mb-1">123 Luxury Blvd, Thảo Điền, TP. Thủ Đức</p>
+                                    <p className="small mb-1">T: +84 (0) 28 88xx xxxx</p>
+                                    <p className="small mb-0">E: hello@luxlife-furniture.vn</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-muted small">Chúng tôi sẽ liên hệ xác nhận đơn hàng trong giây lát.<br/>Hệ thống sẽ tự động quay lại cửa hàng.</p>
-                </motion.div>
+
+                    {/* Items Table */}
+                    <div className="mb-5">
+                        <div className="row g-0 py-3 mb-2 border-bottom border-dark border-2 uppercase ls-2 small fw-bold text-muted">
+                            <div className="col-6">Description</div>
+                            <div className="col-2 text-center">Qty</div>
+                            <div className="col-2 text-end">Price</div>
+                            <div className="col-2 text-end">Amount</div>
+                        </div>
+                        
+                        {finalOrder.items.map((item, idx) => (
+                            <div key={idx} className="row g-0 py-4 border-bottom align-items-center">
+                                <div className="col-6">
+                                    <h6 className="fw-bold mb-1 ls-1">{item.name.toUpperCase()}</h6>
+                                    <p className="small text-muted mb-0">Premium Collection - Authentic Series</p>
+                                </div>
+                                <div className="col-2 text-center fw-bold">{item.qty}</div>
+                                <div className="col-2 text-end">{new Intl.NumberFormat('vi-VN').format(item.price)}đ</div>
+                                <div className="col-2 text-end fw-bold">{new Intl.NumberFormat('vi-VN').format(item.price * item.qty)}đ</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Summary Section */}
+                    <div className="row justify-content-end mb-5">
+                        <div className="col-5">
+                            <div className="d-flex justify-content-between py-2 small uppercase ls-1">
+                                <span className="text-muted">Subtotal</span>
+                                <span className="fw-bold">{new Intl.NumberFormat('vi-VN').format(finalOrder.total)}đ</span>
+                            </div>
+                            <div className="d-flex justify-content-between py-2 small uppercase ls-1">
+                                <span className="text-muted">Shipping</span>
+                                <span className="text-success fw-bold">Complimentary</span>
+                            </div>
+                            <div className="d-flex justify-content-between py-4 mt-2 border-top border-dark align-items-center">
+                                <span className="h5 mb-0 fw-bold uppercase ls-2">Total Amount</span>
+                                <span className="h3 mb-0 fw-bold" style={{ color: '#c5a059' }}>{new Intl.NumberFormat('vi-VN').format(finalOrder.total)}đ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer / Legal */}
+                    <div className="mt-5 pt-5">
+                        <div className="row g-5">
+                            <div className="col-8">
+                                <div className="p-4 border border-dashed text-muted" style={{ fontSize: '0.75rem', lineHeight: 1.6 }}>
+                                    <p className="fw-bold uppercase mb-2 ls-1 text-dark">Terms & Conditions</p>
+                                    1. Warranty: 12 months for manufacturing defects.<br/>
+                                    2. Return Policy: Within 30 days in original condition.<br/>
+                                    3. Delivery: Scheduled within 3-5 business days.<br/>
+                                    4. This is a computer-generated document and is valid without signature.
+                                </div>
+                            </div>
+                            <div className="col-4 d-flex flex-column align-items-center justify-content-center">
+                                <div className="mb-3 text-muted small uppercase ls-2 fw-bold">Authenticity Seal</div>
+                                <div className="p-2 border border-2 border-dark d-flex align-items-center justify-content-center" style={{ width: '100px', height: '100px', borderRadius: '50%', transform: 'rotate(-15deg)', opacity: 0.6 }}>
+                                    <div className="text-center fw-bold" style={{ fontSize: '0.6rem' }}>
+                                        LUXLIFE<br/>ORIGINAL<br/>2026
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="text-center mt-5 pt-5 opacity-50">
+                            <p className="small ls-5 uppercase">www.luxlife-furniture.vn</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
